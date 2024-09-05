@@ -3,9 +3,9 @@ const cors = require('cors');
 const app = express()
 const { Pool } = require('pg')
 
+
 app.use(cors())
 app.use(express.json())
-
 
 
 const pool = new Pool({
@@ -18,9 +18,10 @@ const pool = new Pool({
 
 
 
-app.get('/retrieve_tasks', async(req, res)  =>  {
+//retrieve all records in database
+app.get('/retrieve_tasks', async(req, res) => {
     try {
-        const tasks = await pool.query('SELECT * FROM public.tasks ORDER BY id ASC')
+        const tasks = await pool.query('SELECT * FROM public.tasks ORDER BY id DESC')
         res.json(tasks.rows)
     }
     catch(error) {
@@ -29,9 +30,12 @@ app.get('/retrieve_tasks', async(req, res)  =>  {
  
 });
 
-app.post('/add_task', async(req, res) => {
+//add task
+app.post('/add_task/', async(req, res) => {
+     let success = true
+    let errorMessage = ''
+
     const {taskTitle,taskDescription,isDone}= req.body 
-    let success = true
 
     try{
         const addQuery = 'INSERT INTO tasks (title,description) VALUES ($1, $2)'
@@ -40,23 +44,82 @@ app.post('/add_task', async(req, res) => {
     }
     catch(err)
     {
-        console.log(err)
+        errorMessage = err.message
         success = false
     }
     finally{
-        res.json({success})
+        res.json({success,errorMessage})
     }
 
 });
 
+//delete task
+app.delete('/delete_task', async (req,res) => {
+     const { id } = req.body
+     let success = true
+     let errorMessage = ''
 
-// app.post('/delete_task', async (req,res) => {
-//     try{
-//         const deleteQuery = 'DELETE FROM tasks WHERE id = ?'
-//         const values = [id]
-//     }
-//     catch(err) {
-//     }
-// })
+    try{
+        const values = [id]
+        const deleteQuery = `DELETE FROM tasks WHERE id = $1`
+        const deleteReq = await pool.query(deleteQuery,values)
+    }
+    catch(err) {
+        errorMessage = err.message
+        success = false
+    }
+    finally{
+        res.json({success,errorMessage})
+    }
+})
+
+//updating task
+app.put('/update_task_input', async (req,res) => {
+    let success = true
+      let errorMessage = ''
+
+    const {id,title,description} = req.body
+    const {tasks} = req.body
+  
+
+    try{
+        const values = [id,title ,description]
+        const updateQuery = `UPDATE tasks SET title = $2,
+        description = $3
+        WHERE id = $1`
+        const res = await pool.query(updateQuery,values)
+        console.log('update sucessful')
+    }
+    catch(err) {
+        success = false
+        errorMessage = err.message
+     
+    }
+    finally{
+        res.json({success,errorMessage})
+    }
+}) 
+//updating task is done
+app.put('/update_done_button', async (req,res) => {
+    let success = true
+    let errorMessage = ''
+
+    const {id,is_done} = req.body
+    console.log(req.body)
+    try{
+        const values = [id,is_done]
+        const updateQuery = `UPDATE tasks SET is_done = $2
+        WHERE id = $1`
+        const res = await pool.query(updateQuery,values)
+    }
+    catch(err){
+        success = false
+        errorMessage = err.message
+     
+    }
+    finally{
+        res.json({success,errorMessage})
+    }
+})
 
 app.listen(3001, () => console.log('server is running on port 3001'))
