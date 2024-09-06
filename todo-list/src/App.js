@@ -11,16 +11,17 @@ function App() {
   const [isClickeditButton, setisClickeditButton] = useState(false);
   const [editIdentifier, setEditIdentifier] = useState();
   const [isInputValidation, setInputValidation] = useState(false); 
+  const [storeArrayTask, setstoreArrayTask ] = useState([]);
+
+
+ 
   
   //retrieving all records in database
   const tasksList = async() => {
-    const response = await fetch('http://localhost:3001/retrieve_tasks')
-    const data = await response.json()
-    console.log(data)
-    setTasks(data)
+    const response = await fetch('http://localhost:3001/retrieve_tasks');
+    const data = await response.json();
+    setTasks(data);
   }
-  
- // const handdle
 
 
   //add task
@@ -30,51 +31,67 @@ function App() {
       taskDescription: description,
       isDone: false,
     }
-    setTitle("");
     setDescription("");
-      if(!title && !description){
-        setInputValidation(true)
-      }
-      else {
-        await fetch('http://localhost:3001/add_task', {
-          method: "POST",  
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(task) // INPUT FROM CLIENT
-        })
-        setInputValidation(false)
-      }
+    setTitle("");
+
+    if(!title || !description){
+      setInputValidation(true)
+      return;
+    }
+
+    await fetch('http://localhost:3001/add_task', {
+      method: "POST",  
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(task) // INPUT FROM CLIENT
+    });
+
     tasksList();
+    setInputValidation(false);
   }
 
   
   //updating task
   const updateTask = async() => {
-    const task = {id:editIdentifier,title:title,description:description}
-    if(title && description){
-      try{
+    const task = {
+      id:editIdentifier,
+      title:title,
+      description:description
+    }
+
+    if (title.length !== 0 && description.length !== 0){
+      setisClickeditButton(false);
+      setInputValidation(false);
+      try {
         await fetch (`http://localhost:3001/update_task_input`, {
           method:"PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body : JSON.stringify(task)
+          
         })
-        setInputValidation(false)
+        setDescription("");
+        setTitle("");
+        tasksList();
       }
-      catch(err){
-        console.log(err)
+      catch (err) {
+        console.log(err.message)
       }
-    }else {
+    }
+    else {
       setInputValidation(true)
     }
-      tasksList();
+   
   }
+
   //task done and undone
   const isTaskDone = async(doneId) => {
-
-    const task = {id:doneId,is_done:true}
+    const task = {
+      id:doneId,
+      is_done:true
+    }
 
     try {
       const response = await fetch (`http://localhost:3001/update_done_button`, {
@@ -84,6 +101,7 @@ function App() {
         },
         body: JSON.stringify(task)
       })
+
       if (response.ok){ 
         tasksList();
       }
@@ -94,15 +112,16 @@ function App() {
     catch (err){
       console.log(err.message)
     }
-  
+
   }
 
   const isTaskUndone = async(doneId) => {
-
-    const task = {id:doneId,is_done:false}
+    const task = {
+      id:doneId,
+      is_done:false
+    }
 
     try {
-
       const response = await fetch (`http://localhost:3001/update_done_button`, {
         method: "PUT",
         headers: {
@@ -136,29 +155,57 @@ function App() {
     })
     tasksList();
   }
+  
+    //update button will appear
+    const editList = (task) => {
 
-  //update button will appear
-  const editList = (task) => {
-    setisClickeditButton(true)
-    setEditIdentifier(task.id)
-    setDescription(task.description)
-    setTitle(task.title)
-    const editTask =tasks.map((item,index) => {
-      if(item.id === task.id){
-        // setTasks((prev)=> [...prev, task])
-        return {...item, isEdit:true}
-      } else {
-        return item
-      }
-    })
-   //setTasks((prev)=> [...prev, task]);
-    console.log(editTask)
+      setisClickeditButton(true)
+      console.log(tasks)
+      setTasks(prev => {
+        const _prev = [...prev]
+        const filter = _prev.filter((findItem) => findItem.isEdit === true)
+        if(filter.length === 0) {
+          const updatedTask =_prev.map(item => {
+            if(item.id === task.id){
+                const updatedObj = {...item, isEdit:true}
+                //for the cancel function to store the id and isEdit:false
+                setstoreArrayTask(updatedObj)
+                setEditIdentifier(task.id)
+                setDescription(task.description)
+                setTitle(task.title)
+              return updatedObj
+            } else {
+            return item
+            }
+          })
+          return updatedTask
+        } else {
+          return _prev
+        }
+      })
     
-  }
+    }
+
 //add button will appear
   const cancelButton = () => {
     setisClickeditButton(false)
+    //for the identify and add isEdit property
+    setTasks(prev => {
+      const updatedTask = prev.map(item => {
+        if(item.id === storeArrayTask.id){
+            const updatedObj = {...item, isEdit:false}
+            return updatedObj
+        }
+        else {
+          return item
+        }
+      })
+      return updatedTask
+    })
+    setTitle("");
+    setDescription("");
   }
+
 
   useEffect(() => {
     tasksList();
@@ -228,4 +275,3 @@ function App() {
 }
 
 export default App;
-
