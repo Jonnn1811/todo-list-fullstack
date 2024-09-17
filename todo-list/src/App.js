@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import TaskInput from './components/TaskInput'
 import TaskList from './components/TaskList'
 import TaskDetails from './components/TaskDetails'
-import { ToastContainer } from 'react-toastify';
+import Modal from './components/Modal';
+import { ToastContainer,toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
@@ -12,26 +13,32 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [isClickeditButton, setisClickeditButton] = useState(false);
     const [editIdentifier, setEditIdentifier] = useState();
-    const [isInputValidation, setInputValidation] = useState(false);
     const [storeArrayTask, setstoreArrayTask] = useState([]);
-    const [whiteSpaceErrorMessage, setWhiteSpaceErrorMessage] = useState('');
-    const [redundantErrorMessage, setRedundantErrorMessage] = useState('');
     const [isTasksClick, setIsTaskClick] = useState(false);
     const [taskObjDetails, setTaskObjDetails] = useState({});
     const [isDisable, setIsDisable] = useState(false)
     const [homePageToggle, setHomePageToggle] = useState(true)
     const [taskListToggle, setTaskListToggle] = useState(true)
+    const [errorMessages, setErrorMessage] = useState('')
+    const [isClickAllTask, setIsClickAllTask] = useState(false)
+    const [isClickDone, setIsClickDone] = useState(false)
+    const [isClickUndone, setIsClickUndone] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
 
     const toggleHomepage = () => {
         setHomePageToggle(false)
+            if (tasks.length !== 0){
+                setTaskListToggle(false);
+            }
+            
     }
 
 
     //tasks Selector 
     const taskSelectorDetails = (task) => {
+        setErrorMessage('')
         if (isClickeditButton === false) {
-
             if (isTasksClick === false) {
                 setTaskObjDetails(task)
                 setIsTaskClick(true)
@@ -40,7 +47,6 @@ function App() {
                 setIsTaskClick(false)
             }
         }
-
     }
 
     //retrieving all records in database
@@ -52,44 +58,44 @@ function App() {
 
     //retrieving all done in database 
     const filterDone = async () => {
+        setErrorMessage('')
         const response = await fetch('http://localhost:3001/filter_done');
         const data = await response.json();
-        setTasks(data);
+        console.log(data)
+        if(data.length !== 0) {
+            setTasks(data);
+        } 
+        else {
+            toast.error('No task is complete. Please finish it.')
+            tasksList();
+        }
+        
     }
 
     //retrieving all done in database 
     const filterUndone = async () => {
+        setErrorMessage('')
         const response = await fetch('http://localhost:3001/filter_undone');
         const data = await response.json();
-        setTasks(data);
+
+        if(data.length !== 0) {
+            setTasks(data);
+        } 
+        else {
+            toast.success('All your task is done, Good Job!')
+            tasksList();
+        }
     }
 
 
     //add task
     const addTasksList = async () => {
-        setInputValidation(false);
-        setWhiteSpaceErrorMessage('')
-        setRedundantErrorMessage('')
-
+        setErrorMessage('')
         const task = {
             taskTitle: title,
             taskDescription: description,
             isDone: false,
         }
-        const trimmedTitle = title.trim();
-        const trimmeddescription = description.trim();
-        if (trimmedTitle === '' && trimmeddescription === '') {
-            setWhiteSpaceErrorMessage('Please enter a valid input. White spaces are not allowed.')
-            return;
-        }
-        setDescription("");
-        setTitle("");
-
-        if (!title || !description) {
-            setInputValidation(true)
-            return;
-        }
-
         try {
             const response = await fetch('http://localhost:3001/add_task', {
                 method: "POST",
@@ -98,14 +104,28 @@ function App() {
                 },
                 body: JSON.stringify(task) // INPUT FROM CLIENT
             });
-            //redundant title validation
             const data = await response.json()
-            if (!data.success) {
-                setRedundantErrorMessage('Title must be unique')
+            if(!data.success){
+                setErrorMessage('Title must be unique')
+            } else {
+                setDescription("");
+                setTitle("");
             }
         }
         catch (err) {
             console.log(err)
+        }
+        
+        const trimmedTitle = title.trim();
+        const trimmeddescription = description.trim();
+         if (title.length === 0 || description.length === 0)  {
+            setErrorMessage('Title and Description must be required')
+        } 
+        else if (trimmedTitle === '' && trimmeddescription === '') {
+            setErrorMessage('Please enter a valid input. White spaces are not allowed.')
+        } 
+        else if (title.length >= 255 || description >= 255){
+            setErrorMessage('Please shorten your input and try again, 255 characters are allowed')
         }
         tasksList();
     }
@@ -113,46 +133,57 @@ function App() {
 
     //updating task
     const updateTask = async () => {
+        // setDescription("");
+        // setTitle("");
         const task = {
             id: editIdentifier,
             title: title,
             description: description
         }
-
-        if (title.length !== 0 && description.length !== 0) {
-            setisClickeditButton(false);
-            setInputValidation(false);
-            try {
-                const response = await fetch(`http://localhost:3001/update_task_input`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(task)
-
-                })
-                const data = await response.json()
-                setDescription("");
-                setTitle("");
-                tasksList();
-            }
-            catch (err) {
-                console.log(err.message)
-            }
+        try {
+            const response = await fetch(`http://localhost:3001/update_task_input`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(task)
+            })
+            const data = await response.json()
+            setErrorMessage('')
+                if(!data.success){
+                    setisClickeditButton(true);
+                    setErrorMessage('Title must be unique')
+                } else{
+                    setisClickeditButton(false)
+                    setDescription("");
+                    setTitle("");
+                    setErrorMessage('')
+                }
         }
-        else {
-            setInputValidation(true)
+        catch (err) {
         }
-
+        const trimmedTitle = title.trim();
+        const trimmeddescription = description.trim();
+        if (title.length === 0 || description.length === 0)  {
+            setErrorMessage('Title and Description must be required')
+            setisClickeditButton(true);
+        } else if (trimmedTitle === '' || trimmeddescription === '') {
+            setErrorMessage('Please enter a valid input. White spaces are not allowed.')
+            setisClickeditButton(true);
+        } else if(title.length >= 255 || description >= 255){
+            setErrorMessage('Please shorten your input and try again, 255 characters are allowed')
+            setisClickeditButton(true);
+        }
+    tasksList();
     }
 
     //task done and undone
     const isTaskDone = async (doneId) => {
+        setErrorMessage('')
         const task = {
             id: doneId,
             is_done: true
         }
-
         try {
             const response = await fetch(`http://localhost:3001/update_done_button`, {
                 method: "PUT",
@@ -161,14 +192,12 @@ function App() {
                 },
                 body: JSON.stringify(task)
             })
-
             if (response.ok) {
-                tasksList();
+                filterUndone();
             }
             else {
                 throw new Error(`Network Failed, can't update`)
             }
-
         }
         catch (err) {
             console.log(err.message)
@@ -177,11 +206,12 @@ function App() {
     }
 
     const isTaskUndone = async (doneId) => {
+       
+        setErrorMessage('')
         const task = {
             id: doneId,
             is_done: false
         }
-
         try {
             const response = await fetch(`http://localhost:3001/update_done_button`, {
                 method: "PUT",
@@ -190,9 +220,8 @@ function App() {
                 },
                 body: JSON.stringify(task)
             })
-
             if (response.ok) {
-                tasksList();
+                filterDone();
             }
             else {
                 throw new Error(`Network Failed, can't update`)
@@ -206,28 +235,42 @@ function App() {
 
     //delete task
     const removeList = async (deleteIndex) => {
-
-        await fetch(`http://localhost:3001/delete_task`, {
+        setErrorMessage('')
+        try {
+        const response = await fetch(`http://localhost:3001/delete_task`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(tasks[deleteIndex])
+            
         })
-        tasksList();
+        }catch (err){
+            console.log('error', err)
+        }
+        if(tasks.id === deleteIndex.id){
+            tasksList();
+        }
+        setIsTaskClick(false);
     }
 
     //delete all task
     const removeAllList = async () => {
-
+        setErrorMessage('')
+        try {
         await fetch(`http://localhost:3001/delete_all_task`, {
             method: "DELETE",
         })
+        } catch(err) {
+       
+        }
+        setIsTaskClick(false);
         tasksList();
     }
 
     //update button will appear
     const editList = (task, e) => {
+        setErrorMessage('')
         e.stopPropagation()
         setisClickeditButton(true)
         console.log(tasks)
@@ -281,7 +324,7 @@ function App() {
 
     useEffect(() => {
         tasksList();
-    }, [])
+    },[])
 
 
     return (
@@ -302,30 +345,41 @@ function App() {
                             marginRight: '10px',
                         }}
                     />
-                    <p onClick={toggleHomepage}
-                        style={{
-                            marginRight: '10px',
-                            color: 'Green',
-                            fontSize: '30px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
+                    <div style={{
+                            display: 'flex',
+                            width: '270px',
+                            paddingLeft: '40px',
+                            backgroundColor: '#cf994e',
+                            borderRadius:'50px'
                         }}
                     >
-                        Create a task
-                    </p>
-                    <button onClick={toggleHomepage}
-                        style={{
-                            border: 'solid',
-                            borderColor: 'green',
-                            borderRadius: '100%',
-                            width: '30px',
-                            height: '30px',
-                            backgroundColor: 'Yellow',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        +
-                    </button>
+                        <p onClick={toggleHomepage}
+                            style={{
+                                color: 'Green',
+                                fontSize: '30px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Create a task
+                        </p>
+                        <button 
+                            onClick={toggleHomepage}
+                            style={{
+                                height:'30px',
+                                weight:'30px',
+                                marginTop:'26px',
+                                marginLeft:'10px',
+                                border: 'none',
+                                backgroundColor: '#cf994e',
+                                cursor: 'pointer',
+                                fontSize:'30px',
+                                color: 'darkGreen',
+                            }}
+                        >
+                            +
+                        </button>
+                    </div>
                 </div>
                 :
                 <div style={{
@@ -384,13 +438,21 @@ function App() {
                                 filterUndone={filterUndone}
                                 tasksList={tasksList}
                                 setTaskListToggle={setTaskListToggle}
+                                setIsClickAllTask={setIsClickAllTask}
+                                isClickAllTask={isClickAllTask}
+                                setIsClickDone={setIsClickDone}
+                                isClickDone={isClickDone}
+                                isClickUndone={isClickUndone}
+                                setIsClickUndone={setIsClickUndone}
+                                setIsModalOpen={setIsModalOpen}
+                                isModalOpen={isModalOpen}
                             />
                         }
                     </div>
 
                     <div
                         style={{
-                            backgroundColor: '#FCFCF7',
+                            backgroundColor: '#ffffff',
                             height: '100%',
                             width: '65%',
                             display: 'flex',
@@ -400,19 +462,9 @@ function App() {
                             gap: 10
                         }}
                     >
-                        {isInputValidation &&
+                        {errorMessages  &&
                             <p style={{ color: 'red', font: 'arial', fontWeight: 'bold' }}>
-                                Title and Description must be required
-                            </p>
-                        }
-                        {whiteSpaceErrorMessage !== '' &&
-                            <p style={{ color: 'red', font: 'arial', fontWeight: 'bold' }}>
-                                {whiteSpaceErrorMessage}
-                            </p>
-                        }
-                        {redundantErrorMessage !== '' &&
-                            <p style={{ color: 'red', font: 'arial', fontWeight: 'bold' }}>
-                                {redundantErrorMessage}
+                                {errorMessages}
                             </p>
                         }
 
@@ -437,6 +489,7 @@ function App() {
                                 homePageToggle={homePageToggle}
                                 setHomePageToggle={setHomePageToggle}
                                 setTaskListToggle={setTaskListToggle}
+                                setIsModalOpen={setIsModalOpen}
                             />
                         }
 
@@ -449,8 +502,6 @@ function App() {
                         closeOnClick
                     />
                 </div>
-
-
             }</div>
     )
 

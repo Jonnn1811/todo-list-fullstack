@@ -1,9 +1,8 @@
 import React from "react";
 
-const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasksList, setTitle, setDescription, updateTask,taskListToggle,setTaskListToggle}) => {
+const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasksList, setTitle, setDescription, updateTask,setIsModalOpen,setTaskListToggle}) => {
 
     return(
-        
         <>
                 <div style={{
                         display:'flex', 
@@ -50,7 +49,6 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                 {isClickeditButton ? 
                     <>
                         <div style={{display:'flex',gap: 20}}>
-                        
                             <button onClick={cancelButton}
                                 style={{
                                     backgroundColor: 'red', 
@@ -100,10 +98,12 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                         >
                             Clear
                         </button>
-                        <button    onClick={() => {
-                                            addTasksList();
-                                            setTaskListToggle();
-                                    }}
+                        <button    
+                            onClick={() => {
+                                    addTasksList();
+                                    setTaskListToggle();
+                                    setIsModalOpen(false)
+                            }}
                             style={{
                             backgroundColor: 'blue', 
                             padding:'8px', 
@@ -124,9 +124,8 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                             <img src='man.png' alt='iconMan'
                             style={{
                                 width:'200px',
-                                marginTop:'120px',
+                                marginTop:'50px',
                                 marginLeft:'800px'
-                           
                             }}
                             />
                         </div>

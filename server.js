@@ -27,7 +27,6 @@ app.get('/retrieve_tasks', async(req, res) => {
         res.json(tasks.rows)
     }
     catch(error) {
-        console.log('error', error)
     }
  
 });
@@ -35,24 +34,30 @@ app.get('/retrieve_tasks', async(req, res) => {
 
 //filter done 
 app.get('/filter_done', async(req, res) => {
+    let success = true
+    let errorMessage = ''
     try {
-        const tasks = await pool.query('SELECT * FROM tasks where is_done = true')
+        const tasks = await pool.query('SELECT * FROM tasks where is_done = true ORDER BY id DESC')
         res.json(tasks.rows)
     }
     catch(error) {
-        console.log('error', error)
+        errorMessage = err.message
+        success = false
     }
  
 });
 
 //filter Undone 
 app.get('/filter_undone', async(req, res) => {
+     let success = true
+    let errorMessage = ''
     try {
-        const tasks = await pool.query('SELECT * FROM tasks where is_done = false')
+        const tasks = await pool.query('SELECT * FROM tasks where is_done = false ORDER BY id DESC')
         res.json(tasks.rows)
     }
     catch(error) {
-        console.log('error', error)
+        errorMessage = err.message
+        success = false
     }
  
 });
@@ -60,24 +65,21 @@ app.get('/filter_undone', async(req, res) => {
 
 //add task
 app.post('/add_task/', async(req, res) => {
-     let success = true
+    let success = true
     let errorMessage = ''
-    let validation = ''
 
     const {taskTitle,taskDescription,isDone}= req.body 
-
     try {
-        const addQuery = 'INSERT INTO tasks (title,description) VALUES ($1, $2)'
-        const values = [taskTitle ,taskDescription]
-        const res = await pool.query(addQuery,values)
+            const addQuery = 'INSERT INTO tasks (title,description) VALUES ($1, $2)'
+            const values = [taskTitle ,taskDescription]
+            const res = await pool.query(addQuery,values)
     }
     catch(err) {
         errorMessage = err.message
         success = false
-        validation = 'Title must be unique'
     }
     finally {
-        res.json({success,errorMessage,validation})
+        res.json({success,errorMessage})
     }
 
 });
@@ -105,12 +107,9 @@ app.delete('/delete_task', async (req,res) => {
 //updating task
 app.put('/update_task_input', async (req,res) => {
     let success = true
-      let errorMessage = ''
+    let errorMessage = ''
 
     const {id,title,description} = req.body
-    const {tasks} = req.body
-  
-
     try {
         const values = [id,title ,description]
         const updateQuery = `UPDATE tasks SET title = $2,
@@ -121,7 +120,6 @@ app.put('/update_task_input', async (req,res) => {
     catch(err) {
         success = false
         errorMessage = err.message
-     
     }
     finally {
         res.json({success,errorMessage})
@@ -133,7 +131,6 @@ app.put('/update_done_button', async (req,res) => {
     let errorMessage = ''
 
     const {id,is_done} = req.body
-    console.log(req.body)
     try {
         const values = [id,is_done]
         const updateQuery = `UPDATE tasks SET is_done = $2
@@ -157,7 +154,6 @@ app.delete('/delete_all_task', async (req,res) => {
     try {
         const deleteAll = 'truncate tasks restart identity cascade'
         const res = await pool.query(deleteAll)
-        console.log('delete all sucessful')
     }
     catch (err) {
         success = false
