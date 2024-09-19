@@ -1,26 +1,42 @@
 import React from "react";
 
-const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasksList, setTitle, setDescription, updateTask,setIsModalOpen,setTaskListToggle}) => {
+const TaskInput = ({
+    title,
+    description,
+    isClickeditButton, 
+    cancelButton, 
+    addTasksList, 
+    setTitle, 
+    setDescription, 
+    updateTask,
+    setIsModalOpen,
+    setTaskListToggle
+}) => {
 
     return(
         <>
-                <div style={{
+                <div 
+                    style={{
                         display:'flex', 
                         width:'600px',
                         alignItem:'center',
                         justifyContent:'center'
-                     }}
+                    }}
                 > 
-                    <p style={{
-                        fontSize:'40px',
-                        fontWeight:'bold',
-                        color:'Darkviolet'}}
+                    <p 
+                        style={{
+                            fontSize:'40px',
+                            fontWeight:'bold',
+                            color:'Darkviolet'
+                        }}
                     > Tasks Management
                     </p>
                 </div>
             <>
-                    <input  value={title} placeholder=" Title"
-                            onChange={(e) => setTitle(e.target.value)}
+                    <input  
+                        value={title} placeholder=" Title"
+                        maxlength="100"
+                        onChange={(e) => setTitle(e.target.value)}
                         style={{    
                             width:'250px', 
                             height:'50px', 
@@ -31,9 +47,10 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                         }}
                     />
                     <textarea   
-                            value={description} placeholder=" Task Details"  
-                            onChange={(e) => setDescription(e.target.value.replace(/\n/g, '<br />'))}
-                            cols="50"
+                        maxlength="255"
+                        value={description} placeholder=" Task Details"  
+                        onChange={(e) => setDescription(e.target.value.replace(/\n/g, '<br />'))}
+                        cols="50"
                         style={{
                             width:'250px', 
                             height:'100px', 
@@ -60,7 +77,7 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                                     fontWeight:'bold',
                                     fontFamily:'arial'
                                 }}
-                            >   Cancel
+                            >  Cancel
                             </button>
 
                             <button  onClick={updateTask}
@@ -74,13 +91,13 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                                     fontWeight:'bold',
                                     fontFamily:'arial'
                                 }}
-                            >   Update
+                            >  Update
                             </button>
-                            
                         </div>
                 </> : 
-                    <div style={{marginBottom:''}}>
-                        <button style={{
+                    <div>
+                        <button 
+                            style={{
                                 backgroundColor: 'red', 
                                 padding:'8px', 
                                 border:'none', 
@@ -90,30 +107,29 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                                 fontWeight:'bold',
                                 fontFamily:'arial',
                                 marginRight: '20px'
-                                }}
+                            }}
                             onClick={() => {
                                 setDescription("")
                                 setTitle("")
                             }}
-                        >
-                            Clear
+                        > Clear
                         </button>
                         <button    
                             onClick={() => {
                                     addTasksList();
-                                    setTaskListToggle();
+                                    setTaskListToggle(false);
                                     setIsModalOpen(false)
                             }}
                             style={{
-                            backgroundColor: 'blue', 
-                            padding:'8px', 
-                            border:'none', 
-                            borderRadius:'20px', 
-                            color:'white',
-                            cursor:'pointer',
-                            fontWeight:'bold',
-                            fontFamily:'arial'
-                        }}
+                                backgroundColor: 'blue', 
+                                padding:'8px', 
+                                border:'none', 
+                                borderRadius:'20px', 
+                                color:'white',
+                                cursor:'pointer',
+                                fontWeight:'bold',
+                                fontFamily:'arial'
+                            }}
                         >   Add
                         </button>
                         
@@ -122,18 +138,17 @@ const TaskInput = ({title, description,isClickeditButton, cancelButton, addTasks
                 }
                     <div style={{display:'flex'}}>
                             <img src='man.png' alt='iconMan'
-                            style={{
-                                width:'200px',
-                                marginTop:'50px',
-                                marginLeft:'800px'
-                            }}
+                                style={{
+                                    width:'200px',
+                                    marginTop:'50px',
+                                    marginLeft:'800px'
+                                }}
                             />
                         </div>
                 </>
             </>
         </>
         
-
     )
 }
 

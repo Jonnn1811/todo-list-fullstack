@@ -1,10 +1,10 @@
 const HomePage = ({setHomePageToggle}) =>
 {
     return(
-        <div style={{dipslay:'flex'}}>
+        <div onclick={ () => {setHomePageToggle(false)}}
+          style={{dipslay:'flex', cursor:'pointer'}}>
           <p>Create A task</p>
-          <button onclick={ () => {setHomePageToggle(false)
-          }}>Toggle</button>
+          <button onclick={ () => {setHomePageToggle(false)}}>Toggle</button>
             
         </div>
     )

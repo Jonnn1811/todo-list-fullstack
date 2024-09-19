@@ -1,5 +1,5 @@
 
-const TaskDetails = ({title, description,taskSelector,task,taskObjDetails}) => {
+const TaskDetails = ({taskSelector,taskObjDetails}) => {
  
     return (
         <div style={{width:'450px',height:'500px'}}>
@@ -9,24 +9,26 @@ const TaskDetails = ({title, description,taskSelector,task,taskObjDetails}) => {
                     marginBottom:'60px',
                     cursor:'pointer'
                 }} 
-                onClick={taskSelector}>
+                onClick={taskSelector}
+            >
                     <img src='./x-button.svg' alt='Back' />
                 </button>
-           <p   
+            <p   
                 style={{
                     fontSize:'25px',
                     wordBreak:'break-word',
                     fontWeight: 'bold'
                 }}
-           >    {taskObjDetails.title}
-           </p>
-           <p
+            >    {taskObjDetails.title}
+            </p>
+            <p
                 style={{
                     marginLeft: '8px',
                     wordBreak:'break-word',
                     fontSize:'14px',
                     color:'#78716c'
-            }}>
+                }}
+            >
                 {taskObjDetails.description}
             </p>
         </div>

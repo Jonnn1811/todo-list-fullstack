@@ -6,8 +6,6 @@ const TaskList = ({
   tasks, 
   removeList, 
   editList,
-  isTaskDone, 
-  isTaskUndone, 
   isClickeditButton,
   removeAllList, 
   taskSelector, 
@@ -15,7 +13,7 @@ const TaskList = ({
   setisClickeditButton, 
   filterDone, 
   filterUndone, 
-  tasksList, 
+  loadTasks,
   setTaskListToggle,
   isClickAllTask,
   setIsClickDone,
@@ -24,7 +22,11 @@ const TaskList = ({
   setIsClickUndone,
   setIsClickAllTask,
   setIsModalOpen,
-  isModalOpen}) => {
+  isModalOpen,
+  updateTaskStatus,
+  toggleDone,
+  filterMessage
+}) => {
 
 
   return (
@@ -134,7 +136,7 @@ const TaskList = ({
           <div style={{
             backgroundColor: 'white',
             height: '40px', position: 'fixed',
-            width: '31%', display: 'flex',
+            width: '27%', display: 'flex',
             justifyContent: 'right',
             alignItems: 'center',
             paddingRight: '30.5px',
@@ -144,7 +146,7 @@ const TaskList = ({
             <button 
             onClick={ () => { 
               if (!isClickeditButton) {
-                tasksList()
+                loadTasks()
                 setIsClickAllTask(true)
                 setIsClickDone(false)
                 setIsClickUndone(false)
@@ -250,12 +252,30 @@ const TaskList = ({
               }}
             >
               Delete All
-            </button>
-          </div>
+            </button> 
+          </div> 
       }
+      {toggleDone ? 
+        <div 
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '800px',
+                width: '100%'
+            }}
+        >
+            <p 
+                style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: 'Darkviolet'
+                }}
+            > {filterMessage}
+            </p>
+        </div> :
       <div style={{ marginTop: '40px' }}>
-        {
-          tasks.map((task, index) =>
+        {tasks.map((task, index) =>
             <div
               style={{
                 backgroundColor: task.is_done ? '#bfbfbf' : '#efefef',
@@ -274,7 +294,7 @@ const TaskList = ({
                 fontWeight: 'bold'
               }}
               >
-                {task.title.length > 25 ? task.title.slice(0, 25) + '...' : task.title}
+                {task.title.length > 25 ? task.title.slice(0, 47) + '...' : task.title}
               </p>
               <p
                 style={{
@@ -290,11 +310,39 @@ const TaskList = ({
               {task.is_done ?
                 <div>
                   <button
+                      onClick={() => {
+                        if (!isClickeditButton) {
+                          taskSelector(task)
+                        } else {
+                          toast.error('Edit mode is active; please cancel or finish')
+                          setisClickeditButton(true)
+                        }
+                      }}
+                      style={{
+                        backgroundColor: task.isEdit ? 'lightgray' : 'gray',
+                        padding: '8px',
+                        border: 'none',
+                        borderRadius: '20px',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontFamily: 'arial',
+                        marginRight: '5px',
+                        marginBottom: '8px',
+                      }}>
+                        Details
+                  </button>
+                  <button
                     onClick={() => {
-                      isTaskUndone(task.id)
+                      if (!isClickeditButton) {
+                        updateTaskStatus(task.id, false)
+                      } else {
+                        toast.error('Edit mode is active; please cancel or finish')
+                        setisClickeditButton(true)
+                      }
                     }}
                     style={{
-                      backgroundColor: 'gray',
+                      backgroundColor: task.isEdit ? 'lightgreen' : 'green',
                       padding: '8px',
                       border: 'none',
                       borderRadius: '20px',
@@ -308,7 +356,14 @@ const TaskList = ({
                   >Undone
                   </button>
                   <button
-                    onClick={() => removeList(index)}
+                    onClick={() => {
+                      if (!isClickeditButton) {
+                        removeList(index)
+                      } 
+                      else {
+                        toast.error('Edit mode is active; please cancel or finish')
+                        setisClickeditButton(true)
+                      }}}
                     disabled={isDisable}
                     style={{
                       backgroundColor: task.isEdit ? '#ffcbd1' : '#c30010',
@@ -354,7 +409,7 @@ const TaskList = ({
                     <button
                       onClick={() => {
                         if (!isClickeditButton) {
-                          isTaskDone(task.id)
+                          updateTaskStatus(task.id, true)
                         } else {
                           toast.error('Edit mode is active; please cancel or finish')
                           setisClickeditButton(true)
@@ -378,7 +433,7 @@ const TaskList = ({
                       // disable={isTasksClick}
                       onClick={(e) => {
                         if (!isClickeditButton) {
-                          editList(task, e)
+                          editList(task)
                         } else {
                           toast.error('Edit mode is active; please cancel or finish')
                           setisClickeditButton(true)
@@ -426,6 +481,7 @@ const TaskList = ({
             </div>
           )}
       </div>
+      }
     </div>
 
   )
