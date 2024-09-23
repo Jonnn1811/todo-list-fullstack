@@ -1,5 +1,5 @@
 import './App.css';
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import TaskInput from './components/TaskInput'
 import TaskList from './components/TaskList'
 import TaskDetails from './components/TaskDetails'
@@ -10,7 +10,7 @@ function App() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [tasks, setTasks] = useState([]);
-    const [isClickeditButton, setisClickeditButton] = useState(false);
+    const [isClickeditButton, setIsClickEditButton] = useState(false);
     const [editIdentifier, setEditIdentifier] = useState();
     const [storeArrayTask, setstoreArrayTask] = useState([]);
     const [isTasksClick, setIsTaskClick] = useState(false);
@@ -25,6 +25,7 @@ function App() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filterMessage, setFilterMessage] = useState('');
     const [toggleDone, setToggleDone] = useState(false)
+
 
     const toggleHomepage = (toggle) => {
         setHomePageToggle(toggle)
@@ -46,61 +47,89 @@ function App() {
     }
 
     //retrieving all tasks in database
-    const loadTasks = async () => {
-        const response = await fetch('http://localhost:3001/retrieve_tasks');
-        const data = await response.json();
-        if (data.error_message){
-            toast.error(data.error_message)
-            return
-        }
-        setTasks(data.tasks);
-        if(toggleDone)
-        {
-            setToggleDone(false)
+    // const loadTasks = useCallback( async () => {
+    //     const response = await fetch('http://localhost:3001/retrieve_tasks');
+    //     const data = await response.json();
+    //     if (!data.success){
+    //         toast.error(data.error_message)
+    //         return
+    //     }
+    //     setTasks(data.tasks);
+    //     if(toggleDone)
+    //     {
+    //         setToggleDone(false)
+    //     }
+    // },[toggleDone]) 
+        const loadTasks =  async () => {
+        try {
+            const response = await fetch('http://localhost:3001/retrieve_tasks');
+            const data = await response.json();
+            if (!data.success){
+                toast.error(data.error_message)
+                return
+            }
+            setTasks(data.tasks);
+        } 
+        catch (err){
+            setErrorMessage('Internal Server Error')
         }
     }
 
     //retrieving all Done Tasks in database 
     const filterDone = async () => {
         setErrorMessage('')
-    
-        const response = await fetch('http://localhost:3001/filter_done');
-        const data = await response.json();
-
-        if (data.length !== 0) {
-            setTasks(data);
+        try {
+            const response = await fetch('http://localhost:3001/fiter_done');
+            const data = await response.json();
+            
+            if(!data.success){
+                toast.error(data.errorMessage)
+                return
+            }
+            setTasks(data.tasks);
+            console.log('start',toggleDone)
+            if (data.tasks.length !== 0) {
+                setTasks(data.tasks);
+            }
+            else {
+                setFilterMessage('No task is complete. Please finish them.')
+                setToggleDone(true)
+                console.log('else',toggleDone)
+            }
         } 
-        else {
-            setFilterMessage('No task is complete. Please finish them.')
-            setToggleDone(true)
+        catch (err) {
+            setErrorMessage('Internal Server Error')
+        }
             loadTasks();
-        }
-        if(toggleDone) {
-            setToggleDone(false)
-        }
     }
 
     //retrieving all Undone Tasks in database 
     const filterUndone = async () => {
         setErrorMessage('')
-
-        const response = await fetch('http://localhost:3001/filter_undone');
-        const data = await response.json();
-
-        if(data.length !== 0) {
-            setTasks(data);
-        } 
-        else {
-            setFilterMessage('All your task is done, Good Job!')
-            setToggleDone(true)
-            loadTasks();
+        try {
+            const response = await fetch('http://localhost:3001/filter_undone');
+            const data = await response.json();
+            if(!data.success){
+                toast.error(data.errorMessage)
+                return
+            }
+            if(data.tasks.length !== 0) {
+                setTasks(data.tasks);
+            } 
+            else {
+                setFilterMessage('All your task is done, Good Job!')
+                setToggleDone(true)
+                
+            }
+            if(toggleDone){
+                setToggleDone(false)
+            }
         }
-        if(toggleDone){
-            setToggleDone(false)
+        catch (err) {
+            setErrorMessage('Internal Server Error')
         }
+        loadTasks();
     }
-
-
     //add task
     const addTasksList = async () => {
         setErrorMessage('')
@@ -110,6 +139,7 @@ function App() {
             isDone: false,
         }
         try {
+        
             const response = await fetch('http://localhost:3001/add_task', {
                 method: "POST",
                 headers: {
@@ -118,8 +148,11 @@ function App() {
                 body: JSON.stringify(task) // INPUT FROM CLIENT
             });
             const data = await response.json()
-            if (!data.success) {
-                setErrorMessage('Title must be unique')
+        
+            if(data.validationMessage){
+                setErrorMessage(data.validationMessage)
+            } else if (!data.success){
+                toast.error(data.errorMessage)
             }
             else {
                 setDescription("");
@@ -127,20 +160,11 @@ function App() {
             }
         }
         catch (err) {
-        }
-        
-        const trimmedTitle = title.trim();
-        const trimmeddescription = description.trim();
-
-        if (title.length === 0 || description.length === 0)  {
-            setErrorMessage('Title and Description must be required')
-        } 
-        else if (trimmedTitle === '' || trimmeddescription === '') {
-            setErrorMessage('Please enter a valid input. White spaces are not allowed.')
-        } 
-
-        loadTasks();
+            setErrorMessage('Interanal Server Error')
     }
+    
+    loadTasks();
+}
 
 
     //updating task
@@ -150,7 +174,20 @@ function App() {
             title: title,
             description: description
         }
+        setErrorMessage('')
         try {
+
+            if (title.length === 0 || description.length === 0)  {
+                setErrorMessage('Title and Description must be required')
+                setIsClickEditButton(true);
+                return
+            }
+            else if (title.trim() === '' || description.trim() === '') {
+                setErrorMessage('Please enter a valid input. White spaces are not allowed.')
+                setIsClickEditButton(true);
+                return
+            } 
+
             const response = await fetch(`http://localhost:3001/update_task_input`, {
                 method: "PUT",
                 headers: {
@@ -158,31 +195,27 @@ function App() {
                 },
                 body: JSON.stringify(task)
             })
+
             const data = await response.json()
-            setErrorMessage('')
-            if(!data.success){
-                setisClickeditButton(true);
-                setErrorMessage('Title must be unique')
+
+           
+
+            if (!data.success){
+                setIsClickEditButton(true);
+                toast.error(data.errorMessage)
             }
             else {
-                setisClickeditButton(false)
+                setIsClickEditButton(false);
                 setDescription("");
                 setTitle("");
                 setErrorMessage('')
             }
         }
         catch (err) {
+            setErrorMessage('Interanal Server Error')
         }
-        const trimmedTitle = title.trim();
-        const trimmeddescription = description.trim();
-        if (title.length === 0 || description.length === 0)  {
-            setErrorMessage('Title and Description must be required')
-            setisClickeditButton(true);
-        }
-        else if (trimmedTitle === '' || trimmeddescription === '') {
-            setErrorMessage('Please enter a valid input. White spaces are not allowed.')
-            setisClickeditButton(true);
-        } 
+
+    
     loadTasks();
     }
 
@@ -202,14 +235,24 @@ function App() {
                 },
                 body: JSON.stringify(task)
             });
-    
+
+            const data = await response.json();
+
+            if(!data.success) {
+                toast.error(data.errorMessage)
+                return
+            }
+
             if (response.ok) {
                 isDone ? filterUndone() : filterDone();
-            } else {
-                throw new Error(`Network failed: can't update`);
+            } 
+            else if(!response) {
+                toast.error(data.error_message)
             }
-        } catch (err) {
 
+        } 
+        catch (err) {
+            setErrorMessage('Interanal Server Error')
         }
     };
     
@@ -218,17 +261,23 @@ function App() {
     const removeList = async (deleteIndex) => {
     setErrorMessage('')
         try {
-        await fetch(`http://localhost:3001/delete_task`, {
+            const response = await fetch(`http://localhost:3001/delete_task`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(tasks[deleteIndex])
-            
         })
+
+        const data = await response.json();
+
+        if(!data.success) {
+            toast.error(data.errorMessage)
+            return
+        }
         }
         catch (err) {
-            console.log('error', err)
+            setErrorMessage('Interanal Server Error')
         }
         if(tasks.id === deleteIndex.id){
             loadTasks();
@@ -240,11 +289,17 @@ function App() {
     const removeAllList = async () => {
         setErrorMessage('')
         try {
-        await fetch(`http://localhost:3001/delete_all_task`, {
+        const response = await fetch(`http://localhost:3001/delete_all_task`, {
             method: "DELETE",
         })
+        const data = await response.json();
+        console.log(data)
+        if(!data.success) {
+            toast.error(data.errorMessage)
+            return
+        }
         } catch(err) {
-       
+            setErrorMessage('Interanal Server Error')
         }
         setIsTaskClick(false);
         loadTasks();
@@ -254,7 +309,7 @@ function App() {
     const editList = (task) => {
         
         setErrorMessage('')
-        setisClickeditButton(true)
+        setIsClickEditButton(true)
         
         setTasks(prevTasks => {
             const filter = prevTasks.filter((findItem) => findItem.isEdit === true)
@@ -285,7 +340,7 @@ function App() {
 
     //add button will appear
     const cancelButton = () => {
-    setisClickeditButton(false)
+    setIsClickEditButton(false)
         //for the identify and add isEdit property
         setTasks(prev => {
             const updatedTask = prev.map(item => {
@@ -305,8 +360,8 @@ function App() {
 
     useEffect(() => {
         loadTasks();
+        
     },[]);
-
 
     return (
         <div>
@@ -412,7 +467,7 @@ function App() {
                                     tasks={tasks}
                                     removeList={removeList}
                                     editList={editList}
-                                    setisClickeditButton={setisClickeditButton}
+                                    setisClickeditButton={setIsClickEditButton}
                                     isClickeditButton={isClickeditButton}
                                     removeAllList={removeAllList}
                                     taskSelector={taskSelectorDetails}
@@ -480,9 +535,9 @@ function App() {
 
                     </div>
                     <ToastContainer
-                        position="top-right"
-                        autoClose={1500}
-                        hideProgressBar={false}
+                        position="bottom-right"
+                        autoClose={3000}
+                        hideProgressBar={true}
                         newestOnTop={false}
                         closeOnClick
                     />

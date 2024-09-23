@@ -47,9 +47,9 @@ const TaskInput = ({
                         }}
                     />
                     <textarea   
-                        maxlength="255"
+                        maxLength="255"
                         value={description} placeholder=" Task Details"  
-                        onChange={(e) => setDescription(e.target.value.replace(/\n/g, '<br />'))}
+                        onChange={(e) => setDescription(e.target.value)}
                         cols="50"
                         style={{
                             width:'250px', 

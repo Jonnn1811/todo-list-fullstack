@@ -25,7 +25,7 @@ const TaskList = ({
   isModalOpen,
   updateTaskStatus,
   toggleDone,
-  filterMessage
+  filterMessage,
 }) => {
 
 
@@ -135,9 +135,12 @@ const TaskList = ({
       { tasks.length !== 0 &&
           <div style={{
             backgroundColor: 'white',
-            height: '40px', position: 'fixed',
-            width: '27%', display: 'flex',
-            justifyContent: 'right',
+            width:'500px',
+            maxHeight: '100%', 
+            position: 'fixed',
+            maxWidth: '100%', 
+            display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
             paddingRight: '30.5px',
             zIndex:0
@@ -162,7 +165,8 @@ const TaskList = ({
                 backgroundColor: 'blue',
                 color: 'white',
                 borderRadius: '4px',
-                padding: '5px',
+                minWidth:'6.8rem',
+                padding: '0.4rem',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 border: isClickAllTask && '2.5px solid black'
@@ -191,7 +195,8 @@ const TaskList = ({
                 backgroundColor: 'red',
                 color: 'white',
                 borderRadius: '4px',
-                padding: '5px',
+                minWidth:'6rem',
+                padding: '0.4rem',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 border: isClickDone && '2.5px solid black'
@@ -219,6 +224,7 @@ const TaskList = ({
                 backgroundColor: 'red',
                 color: 'white',
                 borderRadius: '4px',
+                minWidth:'6.7rem',
                 padding: '5px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
@@ -244,6 +250,7 @@ const TaskList = ({
                 marginRight: '20px',
                 backgroundColor: 'darkred',
                 color: 'white',
+                minWidth:'5rem',
                 border: 'none',
                 borderRadius: '4px',
                 padding: '5px',
@@ -290,11 +297,14 @@ const TaskList = ({
             >
 
               <p style={{
-                fontSize: '20px',
-                fontWeight: 'bold'
+                fontSize: '16px',
+                fontWeight: 'bold',
+                overflow: 'hidden' ,
+                whiteSpace: 'nowrap', 
+                textOverflow: 'ellipsis' 
               }}
               >
-                {task.title.length > 25 ? task.title.slice(0, 47) + '...' : task.title}
+                {task.title}
               </p>
               <p
                 style={{

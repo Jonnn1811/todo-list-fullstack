@@ -24,11 +24,11 @@ app.get('/retrieve_tasks', async(req, res) => {
         tasks = await pool.query('SELECT * FROM tasks ORDER BY id DESC')
     }
     catch(error) {
-        error_message = error.message
+        error_message = 'Internal Server Error'
         success = false
     }
     finally{
-       res.json({tasks:tasks.rows,error_message:error_message,success:success})
+        res.json({tasks:tasks.rows,error_message:error_message,success:success})
     }
 }); 
 
@@ -37,29 +37,38 @@ app.get('/retrieve_tasks', async(req, res) => {
 app.get('/filter_done', async(req, res) => {
     let success = true
     let errorMessage = ''
+    let tasks = []
+
     try {
-        const tasks = await pool.query('SELECT * FROM tasks where is_done = true ORDER BY id DESC')
-        res.json(tasks.rows)
+        tasks = await pool.query('SELECT * FROM tasks WHERE is_done = TRUE ORDER BY id DESC')
     }
     catch(error) {
-        errorMessage = err.message
+        errorMessage = `We're currently experiencing issues connecting to our server`
         success = false
+    }
+    finally {
+        res.json({tasks:tasks.rows,errorMessage:errorMessage,success:success})
     }
 });
 
 //filter Undone 
 app.get('/filter_undone', async(req, res) => {
-     let success = true
+    let success = true
     let errorMessage = ''
+    let tasks = []
+
     try {
-        const tasks = await pool.query('SELECT * FROM tasks where is_done = false ORDER BY id DESC')
-        res.json(tasks.rows)
+        tasks = await pool.query('SELECT * FROM tasks WHERE is_done = FALSE ORDER BY id DESC')
+    
     }
     catch(error) {
-        errorMessage = err.message
+        errorMessage = `We're currently experiencing issues connecting to our server`
         success = false
     }
- 
+    finally {
+        res.json({tasks:tasks.rows,errorMessage:errorMessage,success:success})
+    }
+
 });
 
 
@@ -67,22 +76,35 @@ app.get('/filter_undone', async(req, res) => {
 app.post('/add_task/', async(req, res) => {
     let success = true
     let errorMessage = ''
- 
+    let validationMessage = ''
     const {taskTitle,taskDescription}= req.body 
+    const addQuery = 'INSERT INTO tasks (title,description) VALUES ($1, $2)'
+    const values = [taskTitle ,taskDescription]
+
     try {
-        const addQuery = 'INSERT INTO tasks (title,description) VALUES ($1, $2)'
-        const values = [taskTitle ,taskDescription]
-        await pool.query(addQuery,values)
+        
+        if (taskTitle.length === 0 || taskDescription.length === 0)  {
+            validationMessage ='Title and Description must be required'
+            success = false
+        } 
+        else if (taskTitle.trim() === '' || taskDescription.trim() === '') {
+            validationMessage = 'Please enter a valid input. White spaces are not allowed.'
+            success = false
+        } 
+        else {
+            await pool.query(addQuery,values)
+        }
     }
     catch(err) {
-        errorMessage = err.message
+        errorMessage = `Oops! Something went wrong. Please try again later`
         success = false
+    
     }
     finally {
-        res.json({success,errorMessage})
+        res.json({success:success,errorMessage:errorMessage,validationMessage:validationMessage})
     }
-
 });
+
 
 //delete task
 app.delete('/delete_task', async (req,res) => {
@@ -93,10 +115,10 @@ app.delete('/delete_task', async (req,res) => {
     try {
         const values = [id]
         const deleteQuery = `DELETE FROM tasks WHERE id = $1`
-        const deleteReq = await pool.query(deleteQuery,values)
+        await pool.query(deleteQuery,values)
     }
     catch(err) {
-        errorMessage = err.message
+        errorMessage = 'Network Failed'
         success = false
     }
     finally {
@@ -113,13 +135,14 @@ app.put('/update_task_input', async (req,res) => {
     try {
         const values = [id,title ,description]
         const updateQuery = `UPDATE tasks SET title = $2,
-        description = $3
-        WHERE id = $1`
-        const res = await pool.query(updateQuery,values)
+            description = $3
+            WHERE id = $1
+        `
+        await pool.query(updateQuery,values)
     }
     catch(err) {
         success = false
-        errorMessage = err.message
+        errorMessage = 'Internal Server Error'
     }
     finally {
         res.json({success,errorMessage})
@@ -134,13 +157,14 @@ app.put('/update_done_button', async (req,res) => {
     try {
         const values = [id,is_done]
         const updateQuery = `UPDATE tasks SET is_done = $2
-        WHERE id = $1`
-        const res = await pool.query(updateQuery,values)
+            WHERE id = $1
+        `
+        await pool.query(updateQuery,values)
     }
     catch(err) {
         success = false
-        errorMessage = err.message
-     
+        errorMessage = 'Network Failed'
+    
     }
     finally {
         res.json({success,errorMessage})
@@ -151,13 +175,14 @@ app.put('/update_done_button', async (req,res) => {
 app.delete('/delete_all_task', async (req,res) => {
      let success = true
     let errorMessage = ''
+
     try {
-        const deleteAll = 'truncate tasks restart identity cascade'
-        const res = await pool.query(deleteAll)
+        const deleteAll = 'TRUNCATE tasks RESTART IDENTITY CASCADE'
+        await pool.query(deleteAll)
     }
     catch (err) {
         success = false
-        errorMessage = err.message
+        errorMessage = 'Internal Server Error'
     }
     finally { 
         res.json({success,errorMessage})
